@@ -1,0 +1,6 @@
+---
+if (Astro.cookies.has("session_jwt")) {
+    Astro.cookies.delete("session_jwt");
+}
+return Astro.redirect("/login");
+---

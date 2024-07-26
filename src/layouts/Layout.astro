@@ -1,0 +1,180 @@
+---
+interface Props {
+	title: string;
+	useCaptcha?: boolean;
+	useAuthn?: boolean;
+	indexPage?: boolean;
+	followLinks?: boolean;
+	heading: string;
+	localError?: string | undefined;
+}
+
+const {
+	title,
+	useCaptcha = false,
+	indexPage = true,
+	followLinks = false,
+	heading,
+	localError,
+	useAuthn = false,
+} = Astro.props;
+const pageURL = Astro.url;
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta
+			name="description"
+			content="Authentication System made by Muhammad Taha Ali."
+		/>
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<meta
+			name="robot"
+			content={`${indexPage ? "" : "no"}index, ${followLinks ? "" : "no"}follow`}
+		/>
+		<title>{title}</title>
+		{
+			useCaptcha ? (
+				<script
+					is:inline
+					src="https://www.google.com/recaptcha/api.js"
+				/>
+			) : (
+				""
+			)
+		}
+
+		<!-- Facebook Meta Tags -->
+		<meta property="og:url" content={pageURL} />
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content="AuthSys | Login" />
+		<meta
+			property="og:description"
+			content="Authentication System made by Muhammad Taha Ali."
+		/>
+		<meta property="og:image" content="/og_image.png" />
+
+		<!-- Twitter Meta Tags -->
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta property="twitter:domain" content={pageURL.host} />
+		<meta property="twitter:url" content={pageURL} />
+		<meta name="twitter:title" content="AuthSys | Login" />
+		<meta
+			name="twitter:description"
+			content="Authentication System made by Muhammad Taha Ali."
+		/>
+		<meta name="twitter:image" content="/og_image.png" />
+
+		<meta name="referrer" content="strict-origin-when-cross-origin" />
+		<script is:inline src="https://cdn.jsdelivr.net/npm/sweetalert2@11"
+		></script>
+		<link
+			href="
+https://cdn.jsdelivr.net/npm/@sweetalert2/theme-dark@5.0.17/dark.min.css
+"
+			rel="stylesheet"
+		/>
+		{
+			useAuthn ? (
+				<script
+					is:inline
+					src="https://unpkg.com/@simplewebauthn/browser@10.0.0/dist/bundle/index.umd.min.js"
+					integrity="sha384-SijkeUvZZs1bto8G/GPfjLDAg4FRZB5yGFAdMT5T7n3bMnkfFMEhE/h11ClJPNFR"
+					crossorigin="anonymous"
+				/>
+			) : (
+				""
+			)
+		}
+	</head>
+	<body>
+		<main>
+			<h1>{heading}</h1>
+			<slot />
+		</main>
+	</body>
+	<script is:inline>
+		const Toast = Swal.mixin({
+			toast: true,
+			position: "top-end",
+			iconColor: "white",
+			customClass: {
+				popup: "colored-toast",
+			},
+			showConfirmButton: false,
+			timer: 1500,
+			timerProgressBar: true,
+		});
+		function FireToast(parameters) {
+			Toast.fire(parameters);
+		}
+	</script>
+	<script is:inline define:vars={{ localError }}>
+		if (localError) {
+			FireToast({
+				text: localError,
+				icon: "error",
+			});
+		}
+	</script>
+</html>
+<style is:global>
+	body {
+		font-family: system-ui, sans-serif;
+		background: linear-gradient(230deg, #000000 25%, #2c2c2c 100%);
+		color: white;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		height: 100dvh;
+		width: 100dvw;
+		box-sizing: border-box;
+		margin: 0;
+	}
+	main {
+		box-sizing: border-box;
+		width: 450px;
+		padding: 10px;
+
+		background: rgba(255, 255, 255, 0.05);
+		border: 1px solid rgba(255, 255, 255, 0.25);
+		box-shadow: 0px 0px 40px rgba(255, 255, 255, 0.05);
+		-webkit-backdrop-filter: blur(2.5px);
+		backdrop-filter: blur(2.5px);
+		border-radius: 30px;
+
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 1.25rem;
+		padding-bottom: 2rem;
+	}
+	h1 {
+		text-align: center;
+		font-size: 3rem;
+	}
+
+	@media screen and (max-width: 500px) {
+		body {
+			position: relative;
+			display: block;
+		}
+		h1 {
+			position: fixed;
+			width: 100%;
+			top: 0;
+		}
+		main {
+			position: fixed;
+			width: 100%;
+			bottom: 0;
+			padding-top: 2rem;
+			border-radius: 30px 30px 0 0;
+			backdrop-filter: unset;
+		}
+	}
+</style>

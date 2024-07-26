@@ -1,0 +1,84 @@
+---
+interface Props {
+	disabled?: boolean;
+	id: string;
+	type: "text" | "email" | "password" | "number" | "hidden";
+	placeholder: string;
+	required?: boolean;
+	minlength?: number;
+	value?: string
+	title?: string;
+	name?: string;
+	patternErrors?: Record<string, string>;
+	autocomplete?: string;
+	class?: string
+}
+
+const {
+	disabled = false,
+	id,
+	type,
+	placeholder,
+	required,
+	minlength,
+	title,
+	patternErrors,
+	name,
+	value,
+	autocomplete,
+	class: classes
+} = Astro.props;
+---
+
+<input
+	disabled={disabled}
+	id={id}
+	type={type}
+	placeholder={placeholder}
+	required={required}
+	minlength={minlength}
+	title={title}
+	name={name}
+	value={value}
+	class={classes}
+	autocomplete={autocomplete}
+/>
+
+<style>
+	input {
+		box-sizing: border-box;
+		width: 100%;
+		background: #efefef;
+		border: none;
+		border-radius: 1rem;
+		padding: 10px;
+		font-size: 1.25rem;
+		color: #000;
+		transition: outline 250ms;
+	}
+
+	input:disabled {
+		cursor: not-allowed;
+		background: #cacaca;
+		color: #4d4d4d;
+	}
+
+	input:active:not(:disabled),
+	input:focus-visible:not(:disabled) {
+		outline: #0007b2 3px solid;
+	}
+</style>
+<script is:inline define:vars={{ patternErrors, id }}>
+	const inputElement = document.querySelector("#"+id);
+	inputElement?.addEventListener("input", () => {
+		if (patternErrors) {
+			for (const exp in patternErrors) {
+				if (!inputElement.value.match(exp)) {
+					inputElement.setCustomValidity(patternErrors[exp]);
+					return;
+				}
+			}
+			inputElement.setCustomValidity("");
+		}
+	});
+</script>

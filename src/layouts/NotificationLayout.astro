@@ -1,0 +1,49 @@
+---
+import Layout from "./Layout.astro";
+import Text from "../components/Text.astro";
+import Button from "../components/Button.astro";
+import Group from "../components/Group.astro";
+
+interface Props {
+	title: string;
+	indexPage?: boolean;
+	followLinks?: boolean;
+	heading: string;
+	link: string;
+	buttonText?: string;
+	localError?: string | undefined;
+}
+
+const {
+	title,
+	indexPage = true,
+	followLinks = false,
+	heading,
+	link,
+	buttonText = "Continue",
+	localError
+} = Astro.props;
+---
+
+<Layout
+	title={title}
+	useCaptcha={false}
+	indexPage={indexPage}
+	followLinks={followLinks}
+	heading={heading}
+	localError={localError}
+>
+	<Text><slot /></Text>
+	<div>
+		<Group>
+			<Button href={link}>
+				{buttonText}
+			</Button>
+		</Group>
+	</div>
+</Layout>
+<style>
+	div {
+		width: 80%;
+	}
+</style>

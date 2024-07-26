@@ -1,0 +1,101 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Group from '../components/Group.astro';
+import Button from '../components/Button.astro';
+import Field from '../components/Field.astro';
+import Link from '../components/Link.astro';
+import { isAuthenticated } from '../functions/isAuthenticated';
+
+if (isAuthenticated(Astro.cookies)) {
+	return Astro.redirect("/profile");
+}
+---
+
+<Layout title="AuthSys | Login with Passkey" useCaptcha={false} heading='AuthSys' useAuthn={true}>
+	<form onsubmit="buttonClicked(); return false;">
+		<Field id="usernameField" type="text" name="username" placeholder="Username" required={true} minlength={3} autocomplete='webauthn' />
+		<Group>
+			<Button id='loginButton'>Login</Button>
+		</Group>
+		<Group>
+			<Link href="/login">Go To Login</Link>
+		</Group>
+	</form>
+</Layout>
+<style>
+	form {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.5rem;
+	}
+</style>
+<script is:inline>
+	async function buttonClicked() {
+		const userfield = document.getElementById("usernameField");
+		if (!userfield) return;
+		let localError = undefined;
+			try {
+				const resp = await fetch("/passkeys/auth/get-options",{
+					credentials: "include",
+					method: "POST",
+					headers: {
+						"Content-Type":"application/json"
+					}, body: JSON.stringify({
+						username: userfield.value
+					})
+				})
+				if (resp.ok) {
+					const data = await resp.json();
+					const message = data.message;
+					try {
+						const attResp = await SimpleWebAuthnBrowser.startAuthentication(message)
+						const verificationResp = await fetch('/passkeys/auth/verify', {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json',
+								'webauthn_options': resp.headers.get("webauthn_options"),
+							},
+							body: JSON.stringify(attResp),
+						});
+						const data = await verificationResp.json();
+						if (verificationResp.ok && data && data.message?.verified) {
+							document.cookie = "session_jwt="+verificationResp.headers.get("Authorization");
+							window.location.reload();
+						} else {
+							localError = data.error;
+							if (!localError) localError = "An Unknown Error Occured";
+						}
+					} catch (error) {
+						if (error.name === "NotAllowedError") {
+							error.message = "Could Not Login Using Passkey.";
+						}
+						else if (error.name === 'InvalidStateError') {
+							error.message = 'Authenticator was not registered by user.';
+						}
+						throw error;
+					}
+				} else {
+					const err = await resp.json();
+					localError = err.error;
+				}
+			} catch (err) {
+				if (err && typeof err == "string") {
+					localError = err;
+				} else if (
+					err &&
+					typeof err == "object" &&
+					!Array.isArray(err) &&
+					"message" in err &&
+					typeof err.message == "string"
+				) {
+					localError = err.message;
+				} else {
+					localError = "Uknown Error Occured.";
+				}
+			}
+			if (localError) {
+				FireToast({text: localError, icon: "error"})
+			}
+	}
+</script>

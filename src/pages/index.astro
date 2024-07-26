@@ -1,0 +1,8 @@
+---
+import { isAuthenticated } from "../functions/isAuthenticated";
+if (isAuthenticated(Astro.cookies)) {
+    return Astro.redirect("/profile");
+} else {
+    return Astro.redirect("/login");
+}
+---

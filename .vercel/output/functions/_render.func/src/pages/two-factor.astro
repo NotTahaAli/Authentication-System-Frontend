@@ -1,0 +1,254 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Group from "../components/Group.astro";
+import Button from "../components/Button.astro";
+import Field from "../components/Field.astro";
+import Text from "../components/Text.astro";
+import { isAuthenticated } from "../functions/isAuthenticated";
+import NotificationLayout from "../layouts/NotificationLayout.astro";
+const reCaptchaKey = import.meta.env.RECAPTCHA_CLIENT_KEY;
+
+const jwt = isAuthenticated(Astro.cookies);
+
+if (jwt) {
+	if (Astro.request.method == "PATCH" ) {
+		try {
+			const {isEnabled} = await Astro.request.json();
+			const outputResponse = await fetch(import.meta.env.BACKEND_URL + "/auth/two-factor", {
+				method: "PATCH",
+				headers: {
+					"Content-Type": "application/json",
+					"Authorization": jwt.value
+				},
+				body: JSON.stringify({
+					isEnabled
+				})
+			})
+			const {body, status, statusText} = outputResponse;
+			const _resp = new Response(body, {status, statusText});
+			return _resp;
+		} catch (err) {
+			return new Response(JSON.stringify({error: (err? err.toString() : "Unknown Error")}), {status: 500});
+		}
+	}
+	return Astro.redirect("/profile");
+}
+let localError: string | undefined = undefined;
+let bigError: boolean = false;
+const twoFactorCode = Astro.cookies.get("twoFactorAuthentication");
+if (!twoFactorCode) {
+	return Astro.redirect('/');
+}
+if (Astro.request.method == "POST") {
+	try {
+		const formdata = await Astro.request.formData();
+		const codes = formdata.getAll("twoFactorCode");
+		let code = "";
+		for (const codeVal of codes) {
+			code += codeVal.valueOf()
+		}
+		console.log(code);
+		if (code.length != 6) {
+			throw new Error("Invalid Code");
+		}
+		if (Number.isNaN(parseInt(code))) {
+			throw new Error("Invalid Code");
+		}
+		const token = formdata.get("g-recaptcha-response");
+		const resp = await fetch(import.meta.env.BACKEND_URL + "/auth/two-factor", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				"TwoFactorCode": twoFactorCode.value
+			},
+			body: JSON.stringify({
+				code: parseInt(code),
+				token,
+			}),
+		});
+		if (resp.ok) {
+			const jwt = resp.headers.get("Authorization");
+			if (jwt) {
+				Astro.cookies.set("session_jwt", jwt);
+				Astro.cookies.delete("twoFactorAuthentication");
+				return Astro.redirect("/profile");
+			}
+		} else {
+			const err = await resp.json();
+			if (err.error == "Two Factor Token Invalid." || err.error == "Two Factor Token Missing or Invalid.") {
+				Astro.cookies.delete("twoFactorAuthentication");
+				bigError = true;
+			} else if (err.error == "User not found.") {
+				err.error = "The Two Factor Token points to a user that does not exist.";
+				bigError = true;
+			}
+			localError = err.error;
+		}
+	} catch (err) {
+		if (err && typeof err == "string") {
+			localError = err;
+		} else if (
+			err &&
+			typeof err == "object" &&
+			!Array.isArray(err) &&
+			"message" in err &&
+			typeof err.message == "string"
+		) {
+			localError = err.message;
+		} else {
+			localError = "Uknown Error Occured.";
+		}
+	}
+}
+---
+{
+bigError ?
+	<NotificationLayout
+		title="AuthSys | Two Factor Authentication"
+		heading="AuthSys"
+		link="/login"
+		buttonText="Go to Login"
+	>{localError}</NotificationLayout>
+:
+<Layout
+	title="AuthSys | Two Factor Authentication"
+	useCaptcha={true}
+	heading="AuthSys"
+	localError={localError}
+>
+	<Text>Please enter the 6 digit code sent to your email.</Text>
+	<form method="POST">
+		<Group>
+			<Field
+				class="twoFactorField"
+				id="twoFactorField1"
+				type="number"
+				name="twoFactorCode"
+				placeholder=""
+				autocomplete="one-time-code"
+				required={true}
+				minlength={1}
+			/>
+			<Field
+				class="twoFactorField"
+				id="twoFactorField2"
+				type="number"
+				name="twoFactorCode"
+				placeholder=""
+				autocomplete="one-time-code"
+				required={true}
+				minlength={1}
+			/>
+			<Field
+				class="twoFactorField"
+				id="twoFactorField3"
+				type="number"
+				name="twoFactorCode"
+				placeholder=""
+				autocomplete="one-time-code"
+				required={true}
+				minlength={1}
+			/>
+			<Field
+				class="twoFactorField"
+				id="twoFactorField4"
+				type="number"
+				name="twoFactorCode"
+				placeholder=""
+				autocomplete="one-time-code"
+				required={true}
+				minlength={1}
+			/>
+			<Field
+				class="twoFactorField"
+				id="twoFactorField5"
+				type="number"
+				name="twoFactorCode"
+				placeholder=""
+				autocomplete="one-time-code"
+				required={true}
+				minlength={1}
+			/>
+			<Field
+				class="twoFactorField"
+				id="twoFactorField6"
+				type="number"
+				name="twoFactorCode"
+				placeholder=""
+				autocomplete="one-time-code"
+				required={true}
+				minlength={1}
+			/>
+		</Group>
+		<div class="containerDiv">
+			<div
+				class="g-recaptcha"
+				data-sitekey={reCaptchaKey}
+				data-theme="dark"
+			>
+			</div>
+			<Group>
+				<Button id="continueButton">Continue Button</Button>
+			</Group>
+		</div>
+	</form>
+</Layout>
+<style>
+	form, .containerDiv {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 0.5rem;
+	}
+	.containerDiv {
+		width: 80%;
+	}
+</style>
+<style is:inline>
+	.twoFactorField {
+		aspect-ratio: 1/1;
+		text-align: center;
+	}
+</style>
+}
+<script>
+	const fields: NodeListOf<HTMLInputElement> =
+		document.querySelectorAll(".twoFactorField");
+	function checkField(field: HTMLInputElement, number: number) {
+		field.focus();
+		if (Number.isNaN(parseInt(field.value[0] as string))) {
+			field.value = "";
+			return;
+		}
+		if (field.value.length > 1) {
+			try {
+				const remaining = field.value.substring(1);
+				field.value = field.value.substring(0, 1);
+				const nextField = fields[number + 1];
+				if (nextField) {
+					nextField.value = remaining;
+					checkField(nextField, number + 1);
+				}
+			} catch (err) {
+				field.value = "";
+			}
+		}
+	}
+	for (const number in fields) {
+		const field = fields[number];
+		if (!field) continue;
+		field.addEventListener("input", () => {
+			checkField(field, parseInt(number));
+		});
+		field.addEventListener("keydown", (e) => {
+			if (e.key == "Backspace") {
+				if (field.value == "") {
+					const prevField = fields[parseInt(number) - 1];
+					if (prevField) {
+						prevField.focus();
+					}
+				}
+			}
+		});
+	}
+	</script>

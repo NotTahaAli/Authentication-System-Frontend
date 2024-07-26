@@ -1,0 +1,29 @@
+---
+interface Props {
+	mobileDirection?: "row" | "column",
+	desktopDirection?: "row" | "column"
+}
+
+const {mobileDirection = "row", desktopDirection = "row"} = Astro.props;
+---
+
+<div>
+	<slot />
+</div>
+<style define:vars={{mobileDirection, desktopDirection}}>
+	div {
+		display: flex;
+		width: 100%;
+		flex-direction: var(--desktopDirection);
+		justify-content: space-between;
+		gap: 1rem;
+	}
+	div > :global(*):only-child {
+		margin: 0 auto;
+	}
+	@media screen and (max-width: 500px) {
+		div {
+			flex-direction: var(--mobileDirection);
+		}
+	}
+</style>

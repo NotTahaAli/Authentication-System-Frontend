@@ -1,0 +1,52 @@
+---
+type Props = {
+	disabled?: boolean;
+	id?: string;
+	href?: string;
+	class?: string
+}
+
+const { disabled = false, id, href, class:classes } = Astro.props;
+const Tag = href ? "a" : "button";
+---
+
+<Tag class={`btn `+(classes ? classes : "")} disabled={disabled} id={id} href={href}>
+	<slot />
+</Tag>
+<style>
+	.btn {
+		width: 100%;
+		background: #efefef;
+		border: none;
+		border-radius: 1rem;
+		padding: 10px;
+		font-size: 1.25rem;
+		color: #000;
+		transition:
+			background 250ms,
+			color 250ms,
+			outline 250ms;
+		text-align: center;
+		text-decoration: none;
+		box-sizing: border-box;
+	}
+
+	.btn:disabled {
+		cursor: not-allowed;
+		background: #d3d3d3;
+		color: #7a7a7a;
+	}
+
+	.btn:hover:not(:disabled),
+	.btn:focus-visible:not(:disabled) {
+		cursor: pointer;
+		background: #000699;
+		color: #fff;
+		outline: #fff 3px solid;
+	}
+
+	.btn:active:not(:disabled) {
+		background: #3e4292;
+		color: #fff;
+	}
+</style>

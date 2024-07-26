@@ -1,0 +1,56 @@
+---
+import { isAuthenticated } from "../../../functions/isAuthenticated";
+
+const AllowedMethods: Record<string, Record<string, string[]>> = {
+    register: {
+        "generate-options": ["GET"],
+        verify: ["POST"],
+    },
+    auth: {
+        "get-options": ["POST"],
+        verify: ["POST"]
+    },
+};
+
+const { moduleName, functionName } = Astro.params;
+if (!moduleName || !functionName) {
+    Astro.response.status = 404;
+    Astro.response.statusText = "Not found";
+} else {
+    const allowedMethods = AllowedMethods[moduleName]?.[functionName];
+    if (!allowedMethods || !allowedMethods.includes(Astro.request.method)) {
+        Astro.response.status = 404;
+        Astro.response.statusText = "Not found";
+    }
+}
+try {
+    const jwt = isAuthenticated(Astro.cookies)?.value;
+    const sendingHeaders: HeadersInit = {
+        Authorization: jwt || ""
+    };
+    Astro.request.headers.forEach((value, key)=>{
+        sendingHeaders[key] = value;
+    })
+    const outputResponse = await fetch(
+        import.meta.env.BACKEND_URL +
+            "/authn/" +
+            moduleName +
+            "/" +
+            functionName,
+        {
+            method: Astro.request.method,
+            headers: sendingHeaders,
+            body: Astro.request.body,
+            duplex: "half",
+        } as RequestInit,
+    );
+    const { body, status, statusText, headers } = outputResponse;
+    const resp = new Response(body, { status, statusText, headers });
+    return resp;
+} catch (err) {
+    return new Response(
+        JSON.stringify({ error: err ? err.toString() : "Unknown Error" }),
+        { status: 500 },
+    );
+}
+---
