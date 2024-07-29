@@ -18,7 +18,8 @@ if (jwt) {
 				method: "PATCH",
 				headers: {
 					"Content-Type": "application/json",
-					"Authorization": jwt.value
+					"Authorization": jwt.value,
+					"x-vercel-protection-bypass": import.meta.env.VERCEL_BYPASS_KEY
 				},
 				body: JSON.stringify({
 					isEnabled

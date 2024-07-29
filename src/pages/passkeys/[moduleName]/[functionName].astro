@@ -26,7 +26,8 @@ if (!moduleName || !functionName) {
 try {
     const jwt = isAuthenticated(Astro.cookies)?.value;
     const sendingHeaders: HeadersInit = {
-        Authorization: jwt || ""
+        Authorization: jwt || "",
+        "x-vercel-protection-bypass": import.meta.env.VERCEL_BYPASS_KEY
     };
     Astro.request.headers.forEach((value, key)=>{
         sendingHeaders[key] = value;

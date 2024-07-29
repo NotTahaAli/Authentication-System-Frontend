@@ -22,6 +22,7 @@ try {
 			headers: {
 				"Content-Type": "application/json",
 				Cookie: "g_csrf_token=" + g_csrf_token,
+				"x-vercel-protection-bypass": import.meta.env.VERCEL_BYPASS_KEY
 			},
 			body: JSON.stringify({
 				credential,
