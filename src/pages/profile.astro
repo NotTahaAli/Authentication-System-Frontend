@@ -170,7 +170,7 @@ try {
 							method: 'POST',
 							headers: {
 								'Content-Type': 'application/json',
-								'webauthn_options': resp.headers.get("webauthn_options"),
+								'Webauthn-Options': resp.headers.get("Webauthn-Options"),
 							},
 							body: JSON.stringify(attResp),
 						});

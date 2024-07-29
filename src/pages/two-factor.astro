@@ -60,7 +60,8 @@ if (Astro.request.method == "POST") {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
-				"TwoFactorCode": twoFactorCode.value
+				"TwoFactorCode": twoFactorCode.value,
+				"x-vercel-protection-bypass": import.meta.env.VERCEL_BYPASS_KEY
 			},
 			body: JSON.stringify({
 				code: parseInt(code),
