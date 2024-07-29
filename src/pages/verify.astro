@@ -12,7 +12,10 @@ try {
             "/auth/verify?" +
             new URLSearchParams({ code: code ? code : "" }).toString(),
         {
-            method: "GET"
+            method: "GET",
+            headers: {
+                "x-vercel-protection-bypass": import.meta.env.VERCEL_BYPASS_KEY
+            }
         },
     );
     if (!resp.ok) {

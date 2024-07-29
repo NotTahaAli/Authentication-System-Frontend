@@ -17,6 +17,7 @@ try {
 	const resp = await fetch(import.meta.env.BACKEND_URL + "/user", {
 		headers: {
 			Authorization: jwt.value,
+			"x-vercel-protection-bypass": import.meta.env.VERCEL_BYPASS_KEY
 		},
 	});
 	if (resp.ok) {
